@@ -1,0 +1,75 @@
+# Declarative Automation Bundle (DAB) for RevSight Chat: Option C in the README.
+#
+# The bundle reads its settings from the variables below (override with --var or a target),
+# NOT from config.env. config.env is for the workspace_deploy notebook and scripts/ (Options A and B).
+#
+#   databricks bundle validate --strict -t dev
+#   databricks bundle deploy -t dev
+#   databricks bundle run grant_app_access -t dev     # UC + Genie grants for the app's service principal
+#   databricks bundle run revsight_chat -t dev        # deploy the code and start the app
+bundle:
+  name: wyndham-revsight-chat
+
+include:
+  - resources/*.yml
+
+sync:
+  # The app folder is uploaded as is, so keep the Node toolchain out of it: a package.json
+  # in the app source makes Databricks Apps try a Node build, which times out.
+  # app/frontend/dist (the committed build) is all the app needs.
+  exclude:
+    - app/frontend/src
+    - app/frontend/public
+    - app/frontend/package.json
+    - app/frontend/package-lock.json
+    - app/frontend/index.html
+    - app/frontend/tsconfig*.json
+    - app/frontend/vite.config.ts
+    - app/frontend/postcss.config.js
+    - app/frontend/tailwind.config.js
+    - app/frontend/.npmrc
+    - docs
+    - tests
+
+variables:
+  app_name:
+    # Development mode prefixes jobs with [dev <you>] but NOT apps (app names only allow lowercase
+    # letters, numbers and dashes), so pick a name nobody in the workspace uses. Never reuse the name
+    # of an app created outside this bundle: see "Adopting an existing app" in the README.
+    description: Databricks App name (lowercase letters, numbers, dashes; unique in the workspace)
+    default: revsight-chat-dev
+  catalog:
+    description: Catalog that holds the RevSight metric views (built by the wyndham-revsight repo)
+    default: jdub_demo
+  schema:
+    description: Schema with mv_nt_performance and mv_str_compset
+    default: wyndham
+  warehouse_id:
+    description: SQL warehouse the app gets CAN_USE on (use the one your Genie spaces run on)
+    default: 0168e23e24e6ae10
+  genie_space_nt:
+    description: Genie space ID of the NT Performance agent
+    default: 01f1c1f3a12c135681e35099eb87cb2a
+  genie_space_str:
+    description: Genie space ID of the STR Comp Set agent
+    default: 01f1c1f3a21d1a338438c5a06ca2573b
+
+targets:
+  dev:
+    # development mode: deploys under your user folder and prefixes the job name with [dev <you>].
+    mode: development
+    default: true
+
+  # Template for your own workspace: copy, rename, fill in, then
+  #   databricks bundle deploy -t mine
+  # mine:
+  #   mode: development
+  #   workspace:
+  #     host: https://<your-workspace>.cloud.databricks.com
+  #   variables:
+  #     app_name: <unique-app-name>
+  #     catalog: <your_catalog>
+  #     schema: <your_schema>
+  #     warehouse_id: <your_warehouse_id>
+  #     genie_space_nt: <nt_space_id>
+  #     genie_space_str: <str_space_id>

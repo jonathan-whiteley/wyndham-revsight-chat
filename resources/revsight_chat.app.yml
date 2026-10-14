@@ -1,0 +1,40 @@
+resources:
+  apps:
+    revsight_chat:
+      name: ${var.app_name}
+      description: "RevSight Chat: ask Wyndham revenue data with Genie agents and Genie One"
+      source_code_path: ../app
+      resources:
+        - name: sql_warehouse
+          sql_warehouse:
+            id: ${var.warehouse_id}
+            permission: CAN_USE
+        - name: genie_space_nt
+          genie_space:
+            name: NT Performance
+            space_id: ${var.genie_space_nt}
+            permission: CAN_RUN
+        - name: genie_space_str
+          genie_space:
+            name: STR Comp Set
+            space_id: ${var.genie_space_str}
+            permission: CAN_RUN
+      user_api_scopes:
+        - sql
+        - dashboards.genie
+        - genie
+      # The bundle sets the app's command and env here; app/app.yaml (with {{...}} placeholders)
+      # is only used by the notebook and scripts/deploy.sh.
+      config:
+        command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+        env:
+          - name: CATALOG
+            value: ${var.catalog}
+          - name: SCHEMA
+            value: ${var.schema}
+          - name: DATABRICKS_WAREHOUSE_ID
+            value_from: sql_warehouse
+          - name: GENIE_SPACE_NT
+            value_from: genie_space_nt
+          - name: GENIE_SPACE_STR
+            value_from: genie_space_str

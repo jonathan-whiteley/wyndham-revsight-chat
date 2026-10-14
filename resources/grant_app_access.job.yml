@@ -1,0 +1,30 @@
+resources:
+  jobs:
+    grant_app_access:
+      name: grant-app-access-${var.app_name}
+      description: >-
+        Grants the RevSight Chat app's service principal USE CATALOG, USE SCHEMA and SELECT on
+        ${var.catalog}.${var.schema} and Can run on both Genie spaces. Bundles can't grant on a schema
+        or Genie space they don't own, so this runs as you. Re-run after the app is recreated.
+      tasks:
+        - task_key: grant
+          environment_key: default
+          spark_python_task:
+            python_file: ../scripts/grant_app_access.py
+            parameters:
+              - --app-name
+              - ${resources.apps.revsight_chat.name}
+              - --catalog
+              - ${var.catalog}
+              - --schema
+              - ${var.schema}
+              - --warehouse-id
+              - ${var.warehouse_id}
+              - --genie-space-nt
+              - ${var.genie_space_nt}
+              - --genie-space-str
+              - ${var.genie_space_str}
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "2"
